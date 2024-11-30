@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppHeader from "@/components/AppHeader.vue";
+import AppFooter from "@/components/AppFooter.vue";
 </script>
 
 <template>
@@ -9,13 +10,11 @@ import AppHeader from "@/components/AppHeader.vue";
 
     <!-- Contenido principal -->
     <v-main>
-      <slot /> <!-- Aquí se renderiza el contenido de la vista -->
+      <slot />
     </v-main>
 
     <!-- Footer -->
-    <v-footer app color="primary" dark>
-      <div class="text-center w-full">© 2024 Yasna Tarot</div>
-    </v-footer>
+    <AppFooter />
   </v-app>
 </template>
 

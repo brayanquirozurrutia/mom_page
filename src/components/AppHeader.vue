@@ -18,7 +18,7 @@ const navigateTo = (path: string) => {
 
 <template>
   <v-app-bar app style="background-color: #000000;" dark>
-    <v-app-bar-title class="text-white font-bold">Yasna Tarot</v-app-bar-title>
+    <v-app-bar-title class="text-white font-bold">Bruja de Luz</v-app-bar-title>
     <div class="mr-auto">
       <v-btn
           v-for="link in navLinks"

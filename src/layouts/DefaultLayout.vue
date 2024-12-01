@@ -8,7 +8,7 @@ import AppFooter from "@/components/AppFooter.vue";
     <!-- Header -->
     <AppHeader />
 
-    <!-- Contenido principal -->
+    <!-- Main content -->
     <v-main>
       <slot />
     </v-main>

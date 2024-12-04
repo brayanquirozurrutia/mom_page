@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import {computed, ref} from "vue";
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
 
 // Estado para el servicio seleccionado
@@ -16,12 +16,27 @@ const services = ref([
 // Estado para la fecha seleccionada
 const selectedDate = ref<string | null>(null);
 
+// Estado para la hora seleccionada
+const selectedTime = ref<string | null>(null);
+
 // Fechas disponibles
 const availableDates = ref<string[]>([
   "2024-12-01",
   "2024-12-05",
   "2024-12-10",
   "2024-12-15",
+]);
+
+// Horarios disponibles (puedes personalizar estos horarios)
+const availableTimes = ref<string[]>([
+  "09:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
 ]);
 
 // Datos de testimonios de clientes con nombres de íconos
@@ -65,9 +80,41 @@ const isDateAvailable = (date: string) => {
   return availableDates.value.includes(formattedDate);
 };
 
+// Función para verificar si una hora está disponible (opcional)
+const isTimeAvailable = (time: string) => {
+  // Aquí puedes agregar lógica para verificar si la hora está disponible
+  // Por ejemplo, podrías filtrar en función de la fecha seleccionada
+  return availableTimes.value.includes(time);
+};
+
 // Acción al seleccionar una fecha
 const onDateSelected = (date: string) => {
-  const formattedDate = formatDate(new Date(date));
+  selectedDate.value = formatDate(new Date(date));
+  selectedTime.value = null; // Resetear la hora seleccionada al cambiar la fecha
+};
+
+// Acción al seleccionar una hora
+const onTimeSelected = (time: string) => {
+  selectedTime.value = time;
+};
+
+// Función para confirmar la cita
+const confirmAppointment = () => {
+  if (selectedService.value && selectedDate.value && selectedTime.value) {
+    // Aquí puedes manejar la lógica de la cita, como enviarla a una API
+    console.log("Cita confirmada:", {
+      servicio: selectedService.value,
+      fecha: selectedDate.value,
+      hora: selectedTime.value,
+    });
+    // Resetear los campos si es necesario
+    // selectedService.value = null;
+    // selectedDate.value = null;
+    // selectedTime.value = null;
+  } else {
+    // Manejar el caso donde faltan datos
+    console.warn("Faltan datos para confirmar la cita.");
+  }
 };
 </script>
 
@@ -100,7 +147,7 @@ const onDateSelected = (date: string) => {
 
         <!-- Calendar section -->
         <div
-            class="calendar-container flex flex-col justify-start items-center overflow-hidden"
+            class="calendar-container flex flex-col justify-start items-center"
             :class="isCalendarVisible ? 'flex-1' : 'flex-grow'"
         >
           <div class="service-selector w-full max-w-md mb-4">
@@ -114,8 +161,8 @@ const onDateSelected = (date: string) => {
             ></v-select>
           </div>
 
-          <div v-if="selectedService" class="w-full max-w-md overflow-hidden">
-            <v-sheet elevation="2" class="pa-4 overflow-hidden">
+          <div v-if="selectedService" class="w-full max-w-md overflow-auto">
+            <v-sheet elevation="2" class="pa-4">
               <v-date-picker
                   v-model="selectedDate"
                   :allowed-dates="isDateAvailable"
@@ -123,10 +170,30 @@ const onDateSelected = (date: string) => {
                   class="w-full"
               />
               <div class="mt-4">
-                <h3>Fecha seleccionada:</h3>
-                <p>{{ selectedDate || "Ninguna fecha seleccionada" }}</p>
+                <h3 class="text-md font-semibold">Fecha seleccionada:</h3>
+                <p class="text-sm text-gray-600">{{ selectedDate || "Ninguna fecha seleccionada" }}</p>
               </div>
             </v-sheet>
+          </div>
+          <!-- Selector de hora -->
+          <div v-if="selectedDate" class="">
+            <v-select
+                v-model="selectedTime"
+                :items="availableTimes"
+                label="Selecciona una hora"
+                :disabled="!selectedDate"
+                outlined
+            ></v-select>
+            <div class="mt-4">
+              <h3 class="text-md font-semibold">Hora seleccionada:</h3>
+              <p class="text-sm text-gray-600">{{ selectedTime || "Ninguna hora seleccionada" }}</p>
+            </div>
+          </div>
+          <!-- Botón de confirmación (opcional) -->
+          <div v-if="selectedDate && selectedTime" class="mt-6">
+            <v-btn color="primary" @click="confirmAppointment">
+              Confirmar Cita
+            </v-btn>
           </div>
         </div>
       </div>
@@ -136,15 +203,15 @@ const onDateSelected = (date: string) => {
 
 <style scoped>
 .main-container {
-  @apply flex justify-between items-stretch h-screen p-4 gap-4;
+  @apply flex justify-between items-stretch p-4 gap-4;
 }
 
 .testimonials-container {
-  @apply w-1/2 bg-white p-4 rounded-lg shadow overflow-hidden transition-all;
+  @apply w-1/2 bg-white p-4 rounded-lg shadow transition-all;
 }
 
 .calendar-container {
-  @apply w-1/2 bg-white p-4 rounded-lg shadow overflow-hidden transition-all;
+  @apply w-1/2 bg-white p-4 rounded-lg shadow transition-all;
 }
 
 .service-selector {

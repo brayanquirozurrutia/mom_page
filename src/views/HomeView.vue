@@ -19,46 +19,38 @@ const selectedDate = ref<string | null>(null);
 // Estado para la hora seleccionada
 const selectedTime = ref<string | null>(null);
 
-// Fechas disponibles
-const availableDates = ref<string[]>([
-  "2024-12-01",
-  "2024-12-05",
-  "2024-12-10",
-  "2024-12-15",
-]);
-
-// Horarios disponibles (puedes personalizar estos horarios)
-const availableTimes = ref<string[]>([
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-]);
+// Fechas y horarios disponibles
+const availableDatesWithTimes = ref<Record<string, string[]>>({
+  "2024-12-01": ["09:00", "10:00", "11:00"],
+  "2024-12-05": ["12:00", "14:00", "16:00"],
+  "2024-12-10": ["10:00", "11:00", "15:00", "17:00"],
+  "2024-12-15": ["09:00", "12:00", "16:00"],
+});
 
 // Datos de testimonios de clientes con nombres de íconos
 const testimonials = ref([
   {
     name: "Ana López",
     comment: "¡El mejor servicio que he tenido! Muy fácil de reservar.",
+    avatar: "women/68",
     icon: "mdi-emoticon-happy-outline",
   },
   {
     name: "Carlos Pérez",
     comment: "Recomendado al 100%. Puntualidad y calidad.",
+    avatar: "men/90",
     icon: "mdi-thumb-up-outline",
   },
   {
     name: "María Gómez",
     comment: "Una experiencia increíble. Sin duda volveré a usar sus servicios.",
+    avatar: "women/9",
     icon: "mdi-star-outline",
   },
   {
     name: "Juan Rodríguez",
     comment: "¡Excelente atención! Muy satisfecho con el resultado.",
+    avatar: "men/49",
     icon: "mdi-emoticon-cool-outline",
   }
 ]);
@@ -72,25 +64,18 @@ const formatDate = (date: Date) => {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-};
+}
 
 // Función para verificar si una fecha está disponible
 const isDateAvailable = (date: string) => {
   const formattedDate = formatDate(new Date(date));
-  return availableDates.value.includes(formattedDate);
-};
-
-// Función para verificar si una hora está disponible (opcional)
-const isTimeAvailable = (time: string) => {
-  // Aquí puedes agregar lógica para verificar si la hora está disponible
-  // Por ejemplo, podrías filtrar en función de la fecha seleccionada
-  return availableTimes.value.includes(time);
+  return Object.keys(availableDatesWithTimes.value).includes(formattedDate);
 };
 
 // Acción al seleccionar una fecha
-const onDateSelected = (date: string) => {
+const onDateSelected = (date: string | Date) => {
   selectedDate.value = formatDate(new Date(date));
-  selectedTime.value = null; // Resetear la hora seleccionada al cambiar la fecha
+  selectedTime.value = null;
 };
 
 // Acción al seleccionar una hora
@@ -98,21 +83,24 @@ const onTimeSelected = (time: string) => {
   selectedTime.value = time;
 };
 
+// Computed para obtener horarios disponibles para la fecha seleccionada
+const availableTimesForSelectedDate = computed(() => {
+  if (selectedDate.value) {
+    let formatedSelectedDate = formatDate(new Date(selectedDate.value));
+    return availableDatesWithTimes.value[formatedSelectedDate] || [];
+  }
+  return [];
+});
+
 // Función para confirmar la cita
 const confirmAppointment = () => {
   if (selectedService.value && selectedDate.value && selectedTime.value) {
-    // Aquí puedes manejar la lógica de la cita, como enviarla a una API
     console.log("Cita confirmada:", {
       servicio: selectedService.value,
       fecha: selectedDate.value,
       hora: selectedTime.value,
     });
-    // Resetear los campos si es necesario
-    // selectedService.value = null;
-    // selectedDate.value = null;
-    // selectedTime.value = null;
   } else {
-    // Manejar el caso donde faltan datos
     console.warn("Faltan datos para confirmar la cita.");
   }
 };
@@ -132,15 +120,22 @@ const confirmAppointment = () => {
             <div
                 v-for="testimonial in testimonials"
                 :key="testimonial.name"
-                class="flex items-center gap-4 mb-4 bg-gray-50 p-4 rounded-lg hover:shadow-lg border border-black"
+                class="flex items-center gap-4 mb-4 bg-gray-50 p-4 rounded-lg hover:shadow-lg border border-black justify-between"
             >
-              <v-icon size="48" class="text-blue-500 flex-shrink-0">
+              <div class="flex items-center gap-4">
+                <img
+                    :src="`https://randomuser.me/api/portraits/${testimonial.avatar}.jpg`"
+                    alt="Avatar"
+                    class="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <h3 class="font-medium text-gray-800">{{ testimonial.name }}</h3>
+                  <p class="text-sm text-gray-600">{{ testimonial.comment }}</p>
+                </div>
+              </div>
+              <v-icon size="48" class="text-black flex-shrink-0 ml-auto">
                 {{ testimonial.icon }}
               </v-icon>
-              <div>
-                <h3 class="font-medium text-gray-800">{{ testimonial.name }}</h3>
-                <p class="text-sm text-gray-600">{{ testimonial.comment }}</p>
-              </div>
             </div>
           </div>
         </div>
@@ -169,29 +164,28 @@ const confirmAppointment = () => {
                   @input="onDateSelected"
                   class="w-full"
               />
-              <div class="mt-4">
-                <h3 class="text-md font-semibold">Fecha seleccionada:</h3>
-                <p class="text-sm text-gray-600">{{ selectedDate || "Ninguna fecha seleccionada" }}</p>
+              <div v-if="selectedDate" class="mt-4 flex flex-col items-center text-center">
+                <h3 class="text-md font-semibold">
+                  Horarios disponibles para el {{ formatDate(new Date(selectedDate)) }}
+                </h3>
+                <div class="flex flex-wrap gap-2 mt-2 justify-center">
+                  <v-btn
+                      v-for="time in availableTimesForSelectedDate"
+                      :key="time"
+                      @click="onTimeSelected(time)"
+                      :color="time === selectedTime ? 'black' : 'default'"
+                      class="text-sm"
+                  >
+                    {{ time }}
+                  </v-btn>
+                </div>
               </div>
             </v-sheet>
           </div>
-          <!-- Selector de hora -->
-          <div v-if="selectedDate" class="">
-            <v-select
-                v-model="selectedTime"
-                :items="availableTimes"
-                label="Selecciona una hora"
-                :disabled="!selectedDate"
-                outlined
-            ></v-select>
-            <div class="mt-4">
-              <h3 class="text-md font-semibold">Hora seleccionada:</h3>
-              <p class="text-sm text-gray-600">{{ selectedTime || "Ninguna hora seleccionada" }}</p>
-            </div>
-          </div>
+
           <!-- Botón de confirmación (opcional) -->
           <div v-if="selectedDate && selectedTime" class="mt-6">
-            <v-btn color="primary" @click="confirmAppointment">
+            <v-btn color="black" @click="confirmAppointment">
               Confirmar Cita
             </v-btn>
           </div>

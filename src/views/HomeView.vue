@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
+import { formatDate, parseDate } from '@/utils/dateUtils';
 
 const selectedService = ref<string | null>(null);
 const selectedDate = ref<string | null>(null);
@@ -51,12 +52,6 @@ const testimonials = ref([
 const onTimeSelected = (time: string) => {
   selectedTime.value = time;
 };
-
-// TODO: MOVE TO UTILS
-const formatDate = (date: Date): string =>
-    date.toISOString().split("T")[0];
-// TODO: MOVE TO UTILS
-const parseDate = (dateString: string): Date => new Date(dateString);
 
 const isDateAvailable = (date: Date | string): boolean => {
   const formattedDate = date instanceof Date ? formatDate(date) : date;
@@ -165,7 +160,7 @@ const finalizeAppointment = () => {
             </v-sheet>
           </div>
 
-          <!-- Botón de confirmación -->
+          <!-- Confirm button -->
           <div v-if="selectedDate && selectedTime" class="mt-6">
             <v-btn color="black" @click="confirmAppointment">
               Confirmar Cita
@@ -175,23 +170,40 @@ const finalizeAppointment = () => {
       </div>
     </div>
 
-    <!-- Modal de confirmación -->
+    <!-- Confirmation modal -->
     <v-dialog
         v-model="showConfirmationModal"
         max-width="500"
         transition="dialog-top-transition"
     >
       <v-card>
-        <v-card-title class="text-h5">Confirmar Cita</v-card-title>
+        <!-- Title with close icon -->
+        <v-card-title class="text-h5 flex justify-between items-center">
+          <span>¡Confirma tu cita!</span>
+          <v-btn icon="mdi-close" variant="text" @click="closeConfirmationModal"></v-btn>
+        </v-card-title>
+
+        <!-- Confirmation details -->
         <v-card-text>
           <p><strong>Servicio:</strong> {{ selectedService }}</p>
           <p><strong>Fecha:</strong> {{ selectedDate }}</p>
           <p><strong>Hora:</strong> {{ selectedTime }}</p>
         </v-card-text>
+
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="red" @click="closeConfirmationModal">Cancelar</v-btn>
-          <v-btn color="green" @click="finalizeAppointment">Confirmar</v-btn>
+          <v-btn
+              color="grey darken-3"
+              text="Cancelar"
+              @click="closeConfirmationModal"></v-btn>
+          <v-btn
+              prepend-icon="mdi-check-circle"
+              variant="text"
+              @click="finalizeAppointment"
+              class="text-green-600 hover:bg-green-600 hover:text-white"
+          >
+            Confirmar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

@@ -92,38 +92,11 @@ const finalizeAppointment = () => {
 
 <template>
   <DefaultLayout>
-    <div class="container">
-      <div class="flex justify-between items-stretch p-4 gap-4">
-        <!-- Happy clients section -->
-        <div class="w-1/2 bg-white p-4 rounded-lg shadow transition-all">
-          <h2 class="text-lg font-bold mb-4 text-gray-700">Clientes felices</h2>
-          <div>
-            <div
-                v-for="(testimonial, index) in testimonials"
-                :key="testimonial.name + index"
-                class="flex items-center gap-4 mb-4 bg-gray-50 p-4 rounded-lg hover:shadow-lg border border-black justify-between"
-            >
-              <div class="flex items-center gap-4">
-                <img
-                    :src="`https://randomuser.me/api/portraits/${testimonial.avatar}.jpg`"
-                    alt="Avatar"
-                    class="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <h3 class="font-medium text-gray-800">{{ testimonial.name }}</h3>
-                  <p class="text-sm text-gray-600">{{ testimonial.comment }}</p>
-                </div>
-              </div>
-              <v-icon size="48" class="text-black flex-shrink-0 ml-auto">
-                {{ testimonial.icon }}
-              </v-icon>
-            </div>
-          </div>
-        </div>
-
+    <div class="container mx-auto">
+      <div class="flex flex-col md:flex-row gap-4">
         <!-- Calendar section -->
-        <div class="w-1/2 bg-white p-4 rounded-lg shadow transition-all flex flex-col justify-start items-center">
-          <div class="w-full max-w-md mb-4">
+        <div class="w-full md:w-1/2 bg-white p-4 rounded-lg shadow transition-all order-first">
+          <div class="w-full max-w-md mb-4 mx-auto">
             <v-select
                 v-model="selectedService"
                 :items="services"
@@ -134,7 +107,7 @@ const finalizeAppointment = () => {
             ></v-select>
           </div>
 
-          <div v-if="selectedService" class="w-full max-w-md overflow-auto">
+          <div v-if="selectedService" class="w-full max-w-md overflow-auto mx-auto">
             <v-sheet elevation="2" class="pa-4">
               <v-date-picker
                   v-model="wrappedSelectedDate"
@@ -161,55 +134,81 @@ const finalizeAppointment = () => {
           </div>
 
           <!-- Confirm button -->
-          <div v-if="selectedDate && selectedTime" class="mt-6">
+          <div v-if="selectedDate && selectedTime" class="mt-6 text-center">
             <v-btn color="black" @click="confirmAppointment">
               Confirmar Cita
             </v-btn>
           </div>
         </div>
+
+        <!-- Happy clients section -->
+        <div class="w-full md:w-1/2 bg-white p-4 rounded-lg shadow transition-all">
+          <h2 class="text-lg font-bold mb-4 text-gray-700">Clientes felices</h2>
+          <div>
+            <div
+                v-for="(testimonial, index) in testimonials"
+                :key="testimonial.name + index"
+                class="flex items-center gap-4 mb-4 bg-gray-50 p-4 rounded-lg hover:shadow-lg border border-black justify-between"
+            >
+              <div class="flex items-center gap-4">
+                <img
+                    :src="`https://randomuser.me/api/portraits/${testimonial.avatar}.jpg`"
+                    alt="Avatar"
+                    class="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <h3 class="font-medium text-gray-800">{{ testimonial.name }}</h3>
+                  <p class="text-sm text-gray-600">{{ testimonial.comment }}</p>
+                </div>
+              </div>
+              <v-icon size="48" class="text-black flex-shrink-0 ml-auto">
+                {{ testimonial.icon }}
+              </v-icon>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- Confirmation modal -->
+      <v-dialog
+          v-model="showConfirmationModal"
+          max-width="500"
+          transition="dialog-top-transition"
+      >
+        <v-card>
+          <!-- Title with close icon -->
+          <v-card-title class="text-h5 flex justify-between items-center">
+            <span>¡Confirma tu cita!</span>
+            <v-btn icon="mdi-close" variant="text" @click="closeConfirmationModal"></v-btn>
+          </v-card-title>
+
+          <!-- Confirmation details -->
+          <v-card-text>
+            <p><strong>Servicio:</strong> {{ selectedService }}</p>
+            <p><strong>Fecha:</strong> {{ selectedDate }}</p>
+            <p><strong>Hora:</strong> {{ selectedTime }}</p>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+                color="grey darken-3"
+                text="Cancelar"
+                @click="closeConfirmationModal"></v-btn>
+            <v-btn
+                prepend-icon="mdi-check-circle"
+                variant="text"
+                @click="finalizeAppointment"
+                class="text-green-600 hover:bg-green-600 hover:text-white"
+            >
+              Confirmar
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
-
-    <!-- Confirmation modal -->
-    <v-dialog
-        v-model="showConfirmationModal"
-        max-width="500"
-        transition="dialog-top-transition"
-    >
-      <v-card>
-        <!-- Title with close icon -->
-        <v-card-title class="text-h5 flex justify-between items-center">
-          <span>¡Confirma tu cita!</span>
-          <v-btn icon="mdi-close" variant="text" @click="closeConfirmationModal"></v-btn>
-        </v-card-title>
-
-        <!-- Confirmation details -->
-        <v-card-text>
-          <p><strong>Servicio:</strong> {{ selectedService }}</p>
-          <p><strong>Fecha:</strong> {{ selectedDate }}</p>
-          <p><strong>Hora:</strong> {{ selectedTime }}</p>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-              color="grey darken-3"
-              text="Cancelar"
-              @click="closeConfirmationModal"></v-btn>
-          <v-btn
-              prepend-icon="mdi-check-circle"
-              variant="text"
-              @click="finalizeAppointment"
-              class="text-green-600 hover:bg-green-600 hover:text-white"
-          >
-            Confirmar
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </DefaultLayout>
 </template>
-
 <style scoped>
 
 </style>

@@ -1,25 +1,19 @@
 <script setup lang="ts">
-import {computed, ref} from "vue";
+import { computed, ref } from "vue";
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
 
-// Estado para el servicio seleccionado
 const selectedService = ref<string | null>(null);
+const selectedDate = ref<string | null>(null);
+const selectedTime = ref<string | null>(null);
+const showConfirmationModal = ref(false);
 
-// Lista de servicios ofrecidos
-const services = ref([
+const services = ref<{ name: string; value: string }[]>([
   { name: "Corte de cabello", value: "haircut" },
   { name: "Manicure", value: "manicure" },
   { name: "Pedicure", value: "pedicure" },
   { name: "Masaje", value: "massage" },
 ]);
 
-// Estado para la fecha seleccionada
-const selectedDate = ref<string | null>(null);
-
-// Estado para la hora seleccionada
-const selectedTime = ref<string | null>(null);
-
-// Fechas y horarios disponibles
 const availableDatesWithTimes = ref<Record<string, string[]>>({
   "2024-12-01": ["09:00", "10:00", "11:00"],
   "2024-12-05": ["12:00", "14:00", "16:00"],
@@ -27,7 +21,6 @@ const availableDatesWithTimes = ref<Record<string, string[]>>({
   "2024-12-15": ["09:00", "12:00", "16:00"],
 });
 
-// Datos de testimonios de clientes con nombres de íconos
 const testimonials = ref([
   {
     name: "Ana López",
@@ -55,71 +48,64 @@ const testimonials = ref([
   }
 ]);
 
-// Computed para ajustar la altura de ambas zonas
-const isCalendarVisible = computed(() => !!selectedService);
-
-// Formatear fecha al formato "YYYY-MM-DD"
-const formatDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-// Función para verificar si una fecha está disponible
-const isDateAvailable = (date: string) => {
-  const formattedDate = formatDate(new Date(date));
-  return Object.keys(availableDatesWithTimes.value).includes(formattedDate);
-};
-
-// Acción al seleccionar una fecha
-const onDateSelected = (date: string | Date) => {
-  selectedDate.value = formatDate(new Date(date));
-  selectedTime.value = null;
-};
-
-// Acción al seleccionar una hora
 const onTimeSelected = (time: string) => {
   selectedTime.value = time;
 };
 
-// Computed para obtener horarios disponibles para la fecha seleccionada
-const availableTimesForSelectedDate = computed(() => {
-  if (selectedDate.value) {
-    let formatedSelectedDate = formatDate(new Date(selectedDate.value));
-    return availableDatesWithTimes.value[formatedSelectedDate] || [];
-  }
-  return [];
+// TODO: MOVE TO UTILS
+const formatDate = (date: Date): string =>
+    date.toISOString().split("T")[0];
+// TODO: MOVE TO UTILS
+const parseDate = (dateString: string): Date => new Date(dateString);
+
+const isDateAvailable = (date: Date | string): boolean => {
+  const formattedDate = date instanceof Date ? formatDate(date) : date;
+  return Object.keys(availableDatesWithTimes.value).includes(formattedDate);
+};
+
+const wrappedSelectedDate = computed({
+  get: () => (selectedDate.value ? parseDate(selectedDate.value) : null),
+  set: (value: Date) => {
+    selectedDate.value = formatDate(value);
+  },
 });
 
-// Función para confirmar la cita
+const availableTimesForSelectedDate = computed(() =>
+    availableDatesWithTimes.value[selectedDate.value || ""] || []
+);
+
 const confirmAppointment = () => {
-  if (selectedService.value && selectedDate.value && selectedTime.value) {
-    console.log("Cita confirmada:", {
-      servicio: selectedService.value,
-      fecha: selectedDate.value,
-      hora: selectedTime.value,
-    });
-  } else {
-    console.warn("Faltan datos para confirmar la cita.");
+  if (!selectedService.value || !selectedDate.value || !selectedTime.value) {
+    return console.warn("Faltan datos para confirmar la cita.");
   }
+  showConfirmationModal.value = true;
+};
+
+const closeConfirmationModal = () => {
+  showConfirmationModal.value = false;
+};
+
+const finalizeAppointment = () => {
+  console.log("Cita confirmada:", {
+    servicio: selectedService.value,
+    fecha: selectedDate.value,
+    hora: selectedTime.value,
+  });
+  closeConfirmationModal();
 };
 </script>
 
 <template>
   <DefaultLayout>
     <div class="container">
-      <div class="main-container">
+      <div class="flex justify-between items-stretch p-4 gap-4">
         <!-- Happy clients section -->
-        <div
-            class="testimonials-container"
-            :class="isCalendarVisible ? 'flex-1' : 'flex-grow'"
-        >
+        <div class="w-1/2 bg-white p-4 rounded-lg shadow transition-all">
           <h2 class="text-lg font-bold mb-4 text-gray-700">Clientes felices</h2>
           <div>
             <div
-                v-for="testimonial in testimonials"
-                :key="testimonial.name"
+                v-for="(testimonial, index) in testimonials"
+                :key="testimonial.name + index"
                 class="flex items-center gap-4 mb-4 bg-gray-50 p-4 rounded-lg hover:shadow-lg border border-black justify-between"
             >
               <div class="flex items-center gap-4">
@@ -141,15 +127,12 @@ const confirmAppointment = () => {
         </div>
 
         <!-- Calendar section -->
-        <div
-            class="calendar-container flex flex-col justify-start items-center"
-            :class="isCalendarVisible ? 'flex-1' : 'flex-grow'"
-        >
-          <div class="service-selector w-full max-w-md mb-4">
+        <div class="w-1/2 bg-white p-4 rounded-lg shadow transition-all flex flex-col justify-start items-center">
+          <div class="w-full max-w-md mb-4">
             <v-select
                 v-model="selectedService"
                 :items="services"
-                item-text="name"
+                item-title="name"
                 item-value="value"
                 label="Selecciona un servicio"
                 outlined
@@ -159,14 +142,13 @@ const confirmAppointment = () => {
           <div v-if="selectedService" class="w-full max-w-md overflow-auto">
             <v-sheet elevation="2" class="pa-4">
               <v-date-picker
-                  v-model="selectedDate"
+                  v-model="wrappedSelectedDate"
                   :allowed-dates="isDateAvailable"
-                  @input="onDateSelected"
                   class="w-full"
               />
               <div v-if="selectedDate" class="mt-4 flex flex-col items-center text-center">
                 <h3 class="text-md font-semibold">
-                  Horarios disponibles para el {{ formatDate(new Date(selectedDate)) }}
+                  Horarios disponibles para el {{ selectedDate }}
                 </h3>
                 <div class="flex flex-wrap gap-2 mt-2 justify-center">
                   <v-btn
@@ -183,7 +165,7 @@ const confirmAppointment = () => {
             </v-sheet>
           </div>
 
-          <!-- Botón de confirmación (opcional) -->
+          <!-- Botón de confirmación -->
           <div v-if="selectedDate && selectedTime" class="mt-6">
             <v-btn color="black" @click="confirmAppointment">
               Confirmar Cita
@@ -192,23 +174,30 @@ const confirmAppointment = () => {
         </div>
       </div>
     </div>
+
+    <!-- Modal de confirmación -->
+    <v-dialog
+        v-model="showConfirmationModal"
+        max-width="500"
+        transition="dialog-top-transition"
+    >
+      <v-card>
+        <v-card-title class="text-h5">Confirmar Cita</v-card-title>
+        <v-card-text>
+          <p><strong>Servicio:</strong> {{ selectedService }}</p>
+          <p><strong>Fecha:</strong> {{ selectedDate }}</p>
+          <p><strong>Hora:</strong> {{ selectedTime }}</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="red" @click="closeConfirmationModal">Cancelar</v-btn>
+          <v-btn color="green" @click="finalizeAppointment">Confirmar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </DefaultLayout>
 </template>
 
 <style scoped>
-.main-container {
-  @apply flex justify-between items-stretch p-4 gap-4;
-}
 
-.testimonials-container {
-  @apply w-1/2 bg-white p-4 rounded-lg shadow transition-all;
-}
-
-.calendar-container {
-  @apply w-1/2 bg-white p-4 rounded-lg shadow transition-all;
-}
-
-.service-selector {
-  @apply w-full max-w-md;
-}
 </style>

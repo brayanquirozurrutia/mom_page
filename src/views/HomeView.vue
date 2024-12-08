@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
 import { formatDate, parseDate } from '@/utils/dateUtils';
+import { fetchServices } from "@/services/serviceService";
 
-const selectedService = ref<string | null>(null);
+const services = ref<Service[]>([]);
+const selectedService = ref<number | null>(null);
 const selectedDate = ref<string | null>(null);
 const selectedTime = ref<string | null>(null);
 const showConfirmationModal = ref(false);
 
-const services = ref<{ name: string; value: string }[]>([
-  { name: "Corte de cabello", value: "haircut" },
-  { name: "Manicure", value: "manicure" },
-  { name: "Pedicure", value: "pedicure" },
-  { name: "Masaje", value: "massage" },
-]);
+onMounted(async () => {
+  try {
+    services.value = await fetchServices();
+    console.log("Servicios cargados:", services.value);
+  } catch (error) {
+    console.error("Error al cargar los servicios:", error);
+  }
+});
 
 const availableDatesWithTimes = ref<Record<string, string[]>>({
   "2024-12-01": ["09:00", "10:00", "11:00"],
@@ -69,6 +73,11 @@ const availableTimesForSelectedDate = computed(() =>
     availableDatesWithTimes.value[selectedDate.value || ""] || []
 );
 
+const selectedServiceName = computed(() => {
+  const service = services.value.find(s => s.id === selectedService.value);
+  return service ? service.name : null;
+});
+
 const confirmAppointment = () => {
   if (!selectedService.value || !selectedDate.value || !selectedTime.value) {
     return console.warn("Faltan datos para confirmar la cita.");
@@ -101,7 +110,7 @@ const finalizeAppointment = () => {
                 v-model="selectedService"
                 :items="services"
                 item-title="name"
-                item-value="value"
+                item-value="id"
                 label="Selecciona un servicio"
                 outlined
             ></v-select>
@@ -184,7 +193,7 @@ const finalizeAppointment = () => {
 
           <!-- Confirmation details -->
           <v-card-text>
-            <p><strong>Servicio:</strong> {{ selectedService }}</p>
+            <p><strong>Servicio:</strong> {{ selectedServiceName  }}</p>
             <p><strong>Fecha:</strong> {{ selectedDate }}</p>
             <p><strong>Hora:</strong> {{ selectedTime }}</p>
           </v-card-text>

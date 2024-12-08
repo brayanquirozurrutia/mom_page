@@ -10,14 +10,19 @@
     "build:frontend": "vue-tsc -b && vite build",
     "build": "npm run build:frontend",
     "preview": "vite preview",
-    "start": "node src/backend/server.cjs"
+    "start": "node src/backend/server.cjs",
+    "migrate": "node-pg-migrate --migrations-dir src/backend/migrations"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.1",
     "@mdi/js": "^7.4.47",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "node-pg-migrate": "^7.8.0",
     "pg": "^8.13.1",
+    "postgres": "^3.4.5",
     "vue-router": "^4.5.0",
     "vuetify": "^3.7.4"
   },

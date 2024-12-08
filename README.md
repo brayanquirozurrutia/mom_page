@@ -34,6 +34,7 @@ To run this project, you need to have **Docker** and **Docker Compose** installe
     POSTGRES_DB=mydatabase
     DB_HOST=localhost
     DB_PORT=5433
+    DATABASE_URL=postgresql://myuser:mypassword@localhost:5433/mydatabase
     ```
 3. Raise the database
    Lift the PostgreSQL container using Docker Compose:
@@ -62,13 +63,30 @@ To run this project, you need to have **Docker** and **Docker Compose** installe
    - Access the frontend at: http://localhost:5173.
    - Test the backend with an endpoint, for example: http://localhost:3000/api/hello.
 
+## Migrations
+To create a migration, run the following command:
+```bash
+npm run migrate:create <migration_name>
+```
+This command will create a new migration file in the backend/migrations folder.
+
+To run the migrations, use the following command:
+```bash
+npm run migrate up
+```
+
+To undo the last migration, use the following command:
+```bash
+npm run migrate down
+```
+
 ## Project structure
 ```bash
 mom_page_front/
 ├── src/
 │   ├── backend/
 │   │   ├── server.cjs
-│   │   └── database.js
+│   │   └── database.cjs
 │   ├── assets/
 │   ├── components/
 │   ├── layouts/
@@ -88,3 +106,4 @@ mom_page_front/
 ├── README.md
 ├── tailwind.config.js
 └── vite.config.ts
+```

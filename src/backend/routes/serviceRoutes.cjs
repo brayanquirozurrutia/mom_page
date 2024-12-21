@@ -1,8 +1,12 @@
 const express = require("express");
-const serviceController = require("../controllers/serviceController.cjs");
+const {
+    getServices,
+    getAvailableDates,
+} = require("../controllers/serviceController.cjs");
 
 const router = express.Router();
 
-router.get("/services", serviceController.getServices);
+router.get("/services", getServices);
+router.get("/services/:serviceId/availability", getAvailableDates);
 
 module.exports = router;

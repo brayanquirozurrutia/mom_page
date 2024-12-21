@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
 import { formatDate, parseDate } from '@/utils/dateUtils';
 import { fetchServices } from "@/services/serviceService";
+import { useServiceAvailability } from "@/composables/useServiceAvailability";
 
 const services = ref<Service[]>([]);
 const selectedService = ref<number | null>(null);
@@ -10,20 +11,37 @@ const selectedDate = ref<string | null>(null);
 const selectedTime = ref<string | null>(null);
 const showConfirmationModal = ref(false);
 
+const { availableDatesWithTimes, fetchAndTransformData } = useServiceAvailability();
+
+/**
+ * Fetch services and availability data when the component is mounted.
+ */
 onMounted(async () => {
   try {
+    // Fetch all services
     services.value = await fetchServices();
-    console.log("Servicios cargados:", services.value);
+
+    // Fetch availability data for the selected service
+    if (selectedService.value) {
+      await fetchAndTransformData(selectedService.value);
+    }
   } catch (error) {
-    console.error("Error al cargar los servicios:", error);
+    alert("Error al cargar los datos. Por favor, intenta de nuevo.");
+    console.error("Error al cargar los datos:", error);
   }
 });
 
-const availableDatesWithTimes = ref<Record<string, string[]>>({
-  "2024-12-01": ["09:00", "10:00", "11:00"],
-  "2024-12-05": ["12:00", "14:00", "16:00"],
-  "2024-12-10": ["10:00", "11:00", "15:00", "17:00"],
-  "2024-12-15": ["09:00", "12:00", "16:00"],
+/**
+ * Watch for changes in the selected service and fetch availability data.
+ */
+watch(selectedService, async (newServiceId) => {
+  if (newServiceId) {
+    try {
+      await fetchAndTransformData(newServiceId);
+    } catch (error) {
+      console.error("Error al obtener disponibilidad del servicio:", error);
+    }
+  }
 });
 
 const testimonials = ref([
@@ -53,15 +71,26 @@ const testimonials = ref([
   }
 ]);
 
+/**
+ * Event handler for when a time is selected.
+ * @param time - The selected time.
+ */
 const onTimeSelected = (time: string) => {
   selectedTime.value = time;
 };
 
+/**
+ * Check if a date is available for the selected service.
+ * @param date - The date to check.
+ */
 const isDateAvailable = (date: Date | string): boolean => {
   const formattedDate = date instanceof Date ? formatDate(date) : date;
   return Object.keys(availableDatesWithTimes.value).includes(formattedDate);
 };
 
+/**
+ * Computed property to wrap the selected date as a Date object.
+ */
 const wrappedSelectedDate = computed({
   get: () => (selectedDate.value ? parseDate(selectedDate.value) : null),
   set: (value: Date) => {
@@ -69,15 +98,24 @@ const wrappedSelectedDate = computed({
   },
 });
 
+/**
+ * Computed property to get the available times for the selected date.
+ */
 const availableTimesForSelectedDate = computed(() =>
     availableDatesWithTimes.value[selectedDate.value || ""] || []
 );
 
+/**
+ * Computed property to get the name of the selected service.
+ */
 const selectedServiceName = computed(() => {
   const service = services.value.find(s => s.id === selectedService.value);
   return service ? service.name : null;
 });
 
+/**
+ * Confirm the appointment and show the confirmation modal.
+ */
 const confirmAppointment = () => {
   if (!selectedService.value || !selectedDate.value || !selectedTime.value) {
     return console.warn("Faltan datos para confirmar la cita.");
@@ -85,6 +123,9 @@ const confirmAppointment = () => {
   showConfirmationModal.value = true;
 };
 
+/**
+ * Close the confirmation modal.
+ */
 const closeConfirmationModal = () => {
   showConfirmationModal.value = false;
 };

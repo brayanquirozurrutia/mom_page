@@ -66,7 +66,7 @@ To run this project, you need to have **Docker** and **Docker Compose** installe
 ## Migrations
 To create a migration, run the following command:
 ```bash
-npm run migrate:create <migration_name>
+npm run migrate create <migration_name>
 ```
 This command will create a new migration file in the backend/migrations folder.
 

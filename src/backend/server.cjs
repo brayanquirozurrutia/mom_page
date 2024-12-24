@@ -4,6 +4,7 @@ const path = require("path");
 const cors = require("cors");
 
 const serviceRoutes = require("./routes/serviceRoutes.cjs");
+const paymentRoutes = require('./routes/paymentRoutes.cjs');
 
 const app = express();
 const PORT = 3000;
@@ -18,6 +19,9 @@ app.use(express.json());
 
 // Use service routes
 app.use("/api", serviceRoutes);
+
+// Use payment routes
+app.use('/api/payments', paymentRoutes);
 
 // Test endpoint
 app.get("/api/hello", (req, res) => {
